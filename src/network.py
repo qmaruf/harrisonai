@@ -9,11 +9,11 @@ class PetNet(nn.Module):
         self.backbone = resnet18(weights=ResNet18_Weights.DEFAULT)
         self.fc1 = nn.Linear(1000, 512)
         self.fc2 = nn.Linear(512, 39)
-        self.sigmode = nn.Sigmoid()
+        self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
         x = self.backbone(x)
         x = F.relu(self.fc1(x))
         x = self.fc2(x)
-        x = self.sigmode(x)
+        x = self.sigmoid(x)
         return x
