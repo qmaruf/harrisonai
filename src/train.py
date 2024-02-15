@@ -101,10 +101,10 @@ def train_pet_net():
         
         wandb.log({
             'precision': metrics_dict['mean_precision'],
-            'recall': metrics_dict['mean_recall']
+            'recall': metrics_dict['mean_recall'],
+            'train_loss': train_loss,
+            'test_loss': test_loss
         })
-        
-
 
 if __name__ == "__main__":
     train_pet_net()
