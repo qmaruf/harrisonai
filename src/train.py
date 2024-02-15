@@ -98,13 +98,16 @@ def train_pet_net():
         test_loss = run_one_epoch(test_dl, train=False)
         scheduler.step(test_loss)
         metrics_dict = run_eval(test_dl)
-        
-        wandb.log({
-            'precision': metrics_dict['mean_precision'],
-            'recall': metrics_dict['mean_recall'],
-            'train_loss': train_loss,
-            'test_loss': test_loss
-        })
+
+        wandb.log(
+            {
+                "precision": metrics_dict["mean_precision"],
+                "recall": metrics_dict["mean_recall"],
+                "train_loss": train_loss,
+                "test_loss": test_loss,
+            }
+        )
+
 
 if __name__ == "__main__":
     train_pet_net()
