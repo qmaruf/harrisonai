@@ -7,4 +7,6 @@ class config:
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     batch_size = 16
     learning_rate = 0.1
-    epochs = 32
+    epochs = 512
+    debug = True
+    max_side = 512

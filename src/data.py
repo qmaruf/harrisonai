@@ -18,6 +18,8 @@ class PetDataset(Dataset):
         cat_id = list(info_df.columns.values).index("cat")
 
         self.image_paths, self.mask_paths, self.labels = [], [], []
+        if config.debug:
+            sample_ids = sample_ids[:1]
         for sample_id in sample_ids:
             self.image_paths.append(f"{imgs_path}/{sample_id}/image.jpg")
             self.mask_paths.append(f"{imgs_path}/{sample_id}/mask.jpg")
@@ -39,18 +41,39 @@ class PetDataset(Dataset):
         else:
             image = Transforms.test_transform(image=image)["image"]
 
+        # import pdb
+
+        # pdb.set_trace()
+
         image = image / 255.0
         _, h, w = image.shape
-        square = torch.zeros((3, 256, 256))
+        square = torch.zeros((3, config.max_side, config.max_side))
         square[:, 0:h, 0:w] = image
+
+        return square
+
+    def read_mask(self, mask_path):
+        # import pdb
+
+        # pdb.set_trace()
+        mask = cv2.imread(mask_path)
+        mask = Transforms.mask_transform(image=mask)["image"]
+        mask = mask / 255
+        mask
+        mask = mask[0:1, :, :]
+        _, h, w = mask.shape
+        square = torch.zeros((1, config.max_side, config.max_side))
+        square[:, 0:h, 0:w] = mask
 
         return square
 
     def __getitem__(self, idx):
         image_path = self.image_paths[idx]
+        mask_path = self.mask_paths[idx]
         image = self.read_image(image_path)
+        mask = self.read_mask(mask_path)
         label = self.labels[idx].astype(float)
-        return image, label
+        return image, label, mask
 
 
 class DataProcessor:
@@ -85,18 +108,23 @@ class DataProcessor:
 class Transforms:
     train_transform = A.Compose(
         [
-            A.geometric.resize.LongestMaxSize(max_size=256),
-            A.HorizontalFlip(p=0.5),
-            A.RandomBrightnessContrast(p=0.2),
-            A.Blur(3, p=0.5),
-            A.ColorJitter(p=0.5),
-            A.PixelDropout(0.005, p=0.5),
+            A.geometric.resize.Resize(config.max_side, config.max_side),
+            # A.geometric.resize.LongestMaxSize(max_size=config.max_side),
+            # A.HorizontalFlip(p=0.5),
+            # A.RandomBrightnessContrast(p=0.2),
+            # A.Blur(3, p=0.5),
+            # A.ColorJitter(p=0.5),
+            # A.PixelDropout(0.005, p=0.5),
             ToTensorV2(),
         ]
     )
 
     test_transform = A.Compose(
-        [A.geometric.resize.LongestMaxSize(max_size=256), ToTensorV2()]
+        [A.geometric.resize.Resize(config.max_side, config.max_side), ToTensorV2()]
+    )
+
+    mask_transform = A.Compose(
+        [A.geometric.resize.Resize(config.max_side, config.max_side), ToTensorV2()]
     )
 
 
@@ -115,6 +143,8 @@ class Utils:
         train_dl = DataLoader(train_ds, batch_size=config.batch_size, shuffle=True)
         test_dl = DataLoader(test_ds, batch_size=config.batch_size, shuffle=False)
 
+        if config.debug:
+            return train_dl, test_dl
         return train_dl, test_dl
 
     @staticmethod
@@ -134,9 +164,9 @@ class Utils:
                 "precision": precision,
                 "recall": recall,
             }
-            logger.info(
-                f"{pet_id_to_labels[i]} | tp {tp} | fp {fp} | fn {fn} | precision {precision:.5f} | recall {recall:.5f}"
-            )
-        metrics_dict["mean_precision"] = np.mean(precisions)
-        metrics_dict["mean_recall"] = np.mean(recalls)
+            # logger.info(
+            #     f"{pet_id_to_labels[i]} | tp {tp} | fp {fp} | fn {fn} | precision {precision:.5f} | recall {recall:.5f}"
+            # )
+        metrics_dict["precision"] = np.mean(precisions)
+        metrics_dict["recall"] = np.mean(recalls)
         return metrics_dict
