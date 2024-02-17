@@ -119,7 +119,7 @@ class Transforms:
         [
             # A.geometric.resize.Resize(config.max_side, config.max_side),
             A.geometric.resize.LongestMaxSize(max_size=config.max_side),
-            A.HorizontalFlip(p=0.5),
+            # A.HorizontalFlip(p=0.5),
             A.RandomBrightnessContrast(p=0.2),
             A.Blur(3, p=0.5),
             A.ColorJitter(p=0.5),
@@ -135,6 +135,3 @@ class Transforms:
     mask_transform = A.Compose(
         [A.geometric.resize.LongestMaxSize(max_size=config.max_side), ToTensorV2()]
     )
-
-
-

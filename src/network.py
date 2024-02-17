@@ -4,7 +4,6 @@ import torch.nn.functional as F
 from torchvision.models import resnet18, ResNet18_Weights
 
 
-
 class ConvRelu(nn.Module):
     def __init__(self, in_channels, out_channels, kernel, padding):
         super(ConvRelu, self).__init__()
@@ -32,16 +31,13 @@ class ChannelReduce(nn.Module):
         return self.conv(x)
 
 
-
-
-
 class PetNet(nn.Module):
     def __init__(
         self,
         in_channels=3,
         out_channels=1,
     ):
-        super(PetNet, self).__init__()       
+        super(PetNet, self).__init__()
         self.base_model = resnet18(weights=ResNet18_Weights.DEFAULT)
         self.base_layers = list(self.base_model.children())
 
@@ -69,8 +65,6 @@ class PetNet(nn.Module):
                 ConvRelu(64 + 256, 128, 3, 1),
             ]
         )
-
-
 
         self.conv_last = nn.Conv2d(64, 1, 1)
 

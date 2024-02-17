@@ -27,6 +27,7 @@ class Metrics:
 
     def get_precision_recall(self, dl_labels, dl_outputs):
         pet_id_to_labels = DataProcessor().pet_id_to_label
+        dl_outputs = np.where(dl_outputs > 0.5, 1, 0)
         metrics_dict = {}
         precisions, recalls = [], []
         for i in range(config.n_classes):
@@ -37,10 +38,20 @@ class Metrics:
             recall = tp / (tp + fn) if (tp + fn > 0) else 0
             precisions.append(precision)
             recalls.append(recall)
-            metrics_dict[pet_id_to_labels[i]] = {
-                "precision": precision,
-                "recall": recall,
-            }
-        metrics_dict["precision"] = np.mean(precisions)
-        metrics_dict["recall"] = np.mean(recalls)
-        return metrics_dict
+            # metrics_dict[pet_id_to_labels[i]] = {
+            #     "precision": precision,
+            #     "recall": recall,
+            # }
+        precision = np.mean(precisions)
+        recall = np.mean(recalls)
+        return precision, recall
+
+    def get_iou_score(self, seg_lbls_dl, seg_prds_dl, smooth=1):
+        # import pdb; pdb.set_trace()
+        seg_prds_dl = np.where(seg_prds_dl > 0.5, 1, 0)
+        seg_lbls_dl = np.where(seg_lbls_dl > 0.5, 1, 0)
+
+        intersection = np.logical_and(seg_lbls_dl, seg_prds_dl)
+        union = np.logical_or(seg_lbls_dl, seg_prds_dl)
+        iou = (np.sum(intersection) + smooth) / (np.sum(union) + smooth)
+        return iou
