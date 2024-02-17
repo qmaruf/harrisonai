@@ -2,20 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torchvision.models import resnet18, ResNet18_Weights
-from torchvision.models import resnet34, ResNet34_Weights
 
-import segmentation_models_pytorch as smp
-
-
-class StdUpsample(nn.Module):
-    def __init__(self, nin, nout):
-        super().__init__()
-        self.conv = nn.ConvTranspose2d(nin, nout, 2, stride=2)
-        self.bn = nn.BatchNorm2d(nout)
-
-    def forward(self, x):
-        x = self.bn(F.relu(self.conv(x)))
-        return x
 
 
 class ConvRelu(nn.Module):
@@ -45,11 +32,7 @@ class ChannelReduce(nn.Module):
         return self.conv(x)
 
 
-# def convrelu(in_channels, out_channels, kernel, padding):
-#     return nn.Sequential(
-#         nn.Conv2d(in_channels, out_channels, kernel, padding=padding),
-#         nn.ReLU(inplace=True),
-#     )
+
 
 
 class PetNet(nn.Module):
@@ -58,8 +41,7 @@ class PetNet(nn.Module):
         in_channels=3,
         out_channels=1,
     ):
-        super(PetNet, self).__init__()
-        # self.ups = nn.ModuleList()
+        super(PetNet, self).__init__()       
         self.base_model = resnet18(weights=ResNet18_Weights.DEFAULT)
         self.base_layers = list(self.base_model.children())
 
@@ -88,8 +70,7 @@ class PetNet(nn.Module):
             ]
         )
 
-        self.conv_original_size0 = ConvRelu(3, 64, 3, 1)
-        self.conv_original_size1 = ConvRelu(64, 64, 3, 1)
+
 
         self.conv_last = nn.Conv2d(64, 1, 1)
 
@@ -104,6 +85,14 @@ class PetNet(nn.Module):
         self.avgpool = nn.AvgPool2d(8)
         self.fc = nn.Linear(512, 39)
 
+        self.clf_block = nn.Sequential(
+            nn.Conv2d(512, 512, 2, 2),
+            nn.ReLU(),
+            nn.Conv2d(512, 512, 2, 2),
+            nn.ReLU(),
+            nn.Conv2d(512, 512, 2, 2),
+        )
+
     def forward(self, input):
         skip_conns = []
         x = input
@@ -111,7 +100,7 @@ class PetNet(nn.Module):
             x = down(x)
             skip_conns.append(x)
 
-        clf = self.avgpool(x)
+        clf = self.clf_block(x)
         clf = clf.view(clf.size(0), -1)
         clf = self.fc(clf)
         clf = self.sigmoid(clf)
