@@ -6,152 +6,96 @@ import numpy as np
 import torch.optim as optim
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from tqdm import tqdm
-from tqdm import tqdm
-from torchvision.transforms.functional import to_pil_image
 import wandb
-from data import Utils
+from data import DataProcessor
 from config import config
 from network import PetNet
+from utils import DiceLoss, Metrics
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
 
 # wandb.login()
 # run = wandb.init(project="harrison.ai")
 
-train_dl, test_dl = Utils.get_data_loader(
-    imgs_path=config.imgs_path, info_path=config.info_path
-)
-
-from time import time
-
-
-class JaccardLoss(nn.Module):
-    def __init__(self, smooth=1e-6):
-        super(JaccardLoss, self).__init__()
-        self.smooth = smooth
-
-    def forward(self, outputs, targets):
-        outputs = outputs.view(-1)
-        outputs = torch.where(outputs > 0.5, 1.0, 0.0)
-
-        targets = targets.view(-1)
-        targets = torch.where(targets > 0.5, 1.0, 0.0)
-
-        # intersection = (outputs * targets).sum()
-        # total = (outputs + targets).sum()
-        # union = total - intersection
-        # IoU = (intersection + self.smooth) / (union + self.smooth)
-
-        intersection = (outputs * targets).sum()
-        dice = (2.0 * intersection + self.smooth) / (
-            outputs.sum() + targets.sum() + self.smooth
-        )
-
-        return 1 - dice
-
-
+train_dl, test_dl = DataProcessor().get_data_loader()
 net = PetNet().to(config.device)
-clf_criterion = nn.BCELoss()
-mse_criterion = nn.MSELoss()
-seg_criterion = JaccardLoss()
-optimizer = optim.SGD(net.parameters(), lr=config.learning_rate)
+seg_loss_func = DiceLoss()
+clf_loss_func = nn.BCELoss()
+optimizer = optim.SGD(
+    [
+        dict(params=net.parameters(), lr=config.learning_rate),
+    ]
+)
 scheduler = ReduceLROnPlateau(optimizer, "min")
 
 
-def run_one_epoch(dl, train):
+def get_metric(dl):
+    metrics = Metrics()
+    clf_lbls_dl, clf_preds_dl = [], []
+    for data in tqdm(dl, total=len(dl.dataset) // config.batch_size, desc="metric"):
+        imgs, clf_lbls, seg_lbls = data
+        imgs, clf_lbls, seg_lbls = imgs.cuda(), clf_lbls.cuda(), seg_lbls.cuda()
+        with torch.no_grad():
+            seg_preds, clf_preds = net(imgs)
+
+        clf_preds = torch.where(clf_preds > 0.5, torch.tensor(1.0), torch.tensor(0.0))
+        clf_lbls_dl.append(clf_lbls.data.cpu().numpy())
+        clf_preds_dl.append(clf_preds.data.cpu().numpy())
+
+    clf_lbls_dl = np.concatenate(clf_lbls_dl)
+    clf_preds_dl = np.concatenate(clf_preds_dl)
+    metrics_dict = metrics.get_precision_recall(clf_lbls_dl, clf_preds_dl)
+    logger.info(
+        f'precision {metrics_dict["precision"]:.4f} recall {metrics_dict["recall"]:.4f}'
+    )
+
+
+def one_epoch(dl, train):
     losses = []
-    clf_losses, mse_losses, seg_losses = [], [], []
+    seg_losses, clf_losses = [], []
 
     pbar = tqdm(total=len(dl.dataset) // config.batch_size)
     for data in dl:
         pbar.update(1)
-        inputs, clf_labels, seg_labels = data
-
-        inputs = inputs.to(config.device)
-        clf_labels = clf_labels.to(torch.float32).to(config.device)
-        seg_labels = seg_labels.to(torch.float32).to(config.device)
-
-        optimizer.zero_grad()
+        imgs, lbls, segs = data
+        imgs, lbls, segs = imgs.cuda(), lbls.cuda(), segs.cuda()
 
         if train:
-            clf_preds, seg_preds = net(inputs)
+            seg_preds, clf_preds = net(imgs)
+            optimizer.zero_grad()
         else:
             with torch.no_grad():
-                clf_preds, seg_preds = net(inputs)
+                seg_preds, clf_preds = net(imgs)
 
-        clf_loss = clf_criterion(clf_preds.float(), clf_labels.float()) * 5.0
-        mse_loss = mse_criterion(seg_preds, seg_labels) * 5.0
-        seg_loss = seg_criterion(seg_preds, seg_labels)
-        loss = (clf_loss + mse_loss + seg_loss) / 3
-
-        losses.append(loss.item())
-        clf_losses.append(clf_loss.item())
-        mse_losses.append(mse_loss.item())
-        seg_losses.append(seg_loss.item())
-
-        desc = f'{"train" if train else "test"} | {np.mean(losses[-100:]): .4f} | clf {np.mean(clf_losses[-100:]): .4f} | seg {np.mean(seg_losses[-100:]): .4f} | mse {np.mean(mse_losses[-100:]): .4f}'
-        pbar.set_description(desc)
+        seg_loss = seg_loss_func(seg_preds, segs)
+        clf_loss = clf_loss_func(clf_preds.float(), lbls.float())
+        loss = (seg_loss + clf_loss) / 2.0
 
         if train:
             loss.backward()
             optimizer.step()
 
+        losses.append(loss.item())
+        seg_losses.append(seg_loss.item())
+        clf_losses.append(clf_loss.item())
+
+        desc = f"{'train' if train else 'test'} | {np.mean(losses): .5f} | {np.mean(seg_losses): .5f} | {np.mean(clf_losses): .5f}"
+        pbar.set_description(desc)
+
     return np.mean(losses)
-
-
-def run_eval(dl):
-    net.eval()
-    dl_labels, dl_outputs = [], []
-    for data in tqdm(dl, total=len(dl.dataset) // config.batch_size):
-        inputs, clf_labels, seg_labels = data
-        # import pdb
-
-        # pdb.set_trace()
-        inputs = inputs.to(config.device)
-
-        with torch.no_grad():
-            clf_preds, seg_preds = net(inputs)
-
-        # import pdb
-
-        # pdb.set_trace()
-
-        seg_pred = seg_preds[0][0]
-        seg_pred = torch.where(seg_pred > 0.5, 1.0, 0.0) * 255
-        seg_pred = seg_pred.data.cpu().numpy()
-        cv2.imwrite(f"debug/{time()}.jpg", seg_pred)
-
-        clf_labels = clf_labels.data.cpu().numpy()
-        clf_preds = clf_preds.data.cpu().numpy()
-        clf_preds = np.where(clf_preds > 0.5, 1.0, 0.0)
-
-        dl_labels.append(clf_labels)
-        dl_outputs.append(clf_preds)
-
-    dl_labels = np.concatenate(dl_labels)
-    dl_outputs = np.concatenate(dl_outputs)
-    metrics_dict = Utils.get_metrics(dl_labels, dl_outputs)
-
-    return metrics_dict
 
 
 def train_pet_net():
     for epoch in range(config.epochs):
-        net.train()
-        train_loss = run_one_epoch(train_dl, train=True)
-        net.eval()
-        test_loss = run_one_epoch(test_dl, train=False)
-        scheduler.step(test_loss)
-        metrics_dict = run_eval(train_dl)
-
+        train_loss = one_epoch(train_dl, train=True)
         torch.save(net, "model.pth")
-
-        logger.info(
-            f"epoch {epoch} precision {metrics_dict['precision']: .4f} recall {metrics_dict['recall']: .4f}"
-        )
+        test_loss = one_epoch(test_dl, train=False)
+        get_metric(test_dl)
+        scheduler.step(test_loss)
 
         # wandb.log(
         #     {
-        #         "precision": metrics_dict["mean_precision"],
-        #         "recall": metrics_dict["mean_recall"],
         #         "train_loss": train_loss,
         #         "test_loss": test_loss,
         #     }

@@ -8,5 +8,6 @@ class config:
     batch_size = 16
     learning_rate = 0.1
     epochs = 512
-    debug = True
-    max_side = 512
+    debug = False
+    max_side = 256
+    n_classes = 39
