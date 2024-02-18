@@ -19,23 +19,23 @@ st.title("Pet Detection")
 uploaded_file = st.file_uploader("Choose a jpg file")
 
 
-def save_image(uploaded_file) -> str:
-    """
-    Save image to storage
-    args:
-        uploaded_file: file
-    returns:
-        image_path: str
-    """
-    image_id = f"{str(uuid.uuid4())}.jpg"
-    image_path = os.path.join(str(storage_path), image_id)
+# def save_image(uploaded_file) -> str:
+#     """
+#     Save image to storage
+#     args:
+#         uploaded_file: file
+#     returns:
+#         image_path: str
+#     """
+#     image_id = f"{str(uuid.uuid4())}.jpg"
+#     image_path = os.path.join(str(storage_path), image_id)
 
-    logger.info(f"Saving image to {image_path}")
+#     logger.info(f"Saving image to {image_path}")
 
-    with open(image_path, "wb") as hndl:
-        hndl.write(uploaded_file.getbuffer())
+#     with open(image_path, "wb") as hndl:
+#         hndl.write(uploaded_file.getbuffer())
 
-    return image_path
+#     return image_path
 
 
 def show_response(predicted_labels: Dict, mask_path: str) -> None:
@@ -67,8 +67,9 @@ def verify(uploaded_file) -> bool:
 
 if uploaded_file is not None:
     if verify(uploaded_file):
-        saved_image_path = save_image(uploaded_file)
-        response = requests.get(url, params={"image_path": saved_image_path})
+        # saved_image_path = save_image(uploaded_file)
+        image_bytes = uploaded_file.getvalue()
+        response = requests.get(url, params={"image_bytes": image_bytes})
 
         response = response.json()
         mask_path = response["mask_path"]

@@ -12,7 +12,11 @@ RUN pip3 install -r requirements.txt
 
 COPY . /app
 
-RUN mkdir -p weights && wget https://huggingface.co/qmaruf/petnet.pth/resolve/main/model.pth -O weights/model.pth
+RUN mkdir -p weights && \
+	wget https://huggingface.co/qmaruf/petnet.pth/resolve/main/model.pth -O weights/model.pth && \
+	mkdir -p server/uploaded_files && \
+	chmod a+rwx -R server/uploaded_files
+
 
 
 
