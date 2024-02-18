@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import torch
 
 
@@ -7,4 +9,16 @@ class config:
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     batch_size = 16
     learning_rate = 0.1
-    epochs = 32
+    epochs = 512
+    debug = False
+    max_side = 256
+    n_classes = 39
+    weight_path = "weights/model.pth"
+    storage_path = "server/uploaded_files"
+
+    # api_endpoint = "http://0.0.0.0:8000/inference"
+    api_endpoint = "http://uvicorn_server:9001/inference"
+
+
+Path("weights").mkdir(exist_ok=True)
+Path("server/uploaded_files").mkdir(exist_ok=True)
