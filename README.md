@@ -37,6 +37,7 @@ Hyperparameters can be adjusted in the `src/config.py` file. The best-performing
 The training and testing losses, along with accuracy metrics, are logged using Weights and Biases. Metrics such as mean classification precision, recall, segmentation IOU, and loss for both training and validation sets are recorded. The evaluation report is accessible [here](https://api.wandb.ai/links/qmaruf/48qzjuz9).
 
 ## Inference
+#### UI
 PetNet features a REST API, served using FastAPI, for model inference. An accompanying user interface, built with Streamlit, facilitates interaction with the API. To deploy the API, follow these steps:
 1. Build the Docker image as described in the Model Training section.
 2. Launch the service using:
@@ -44,6 +45,18 @@ PetNet features a REST API, served using FastAPI, for model inference. An accomp
 docker compose up
 ```
 3. Access the UI at `http://0.0.0.0:9002`. Users can upload images and receive predictions, including pet type, breed, and the segmentation mask.
+
+#### CLI
+1. Download the trained model from this [link](https://huggingface.co/qmaruf/petnet.pth/resolve/main/model.pth) and place it in the `weights` directory as `model.pth`.
+2. Create a virtual environment and install the required packages using:
+```bash
+pip install -r requirements.txt
+```
+3. Enable the environment and run the following command in terminal to perform inference on an image file:
+```bash
+python src/inference.py --img_path /path/to/image.jpg
+```
+It will display the predicted labels in the terminal and save the segmentation mask as `/path/to/image_predicted_mask.jpg`.
 
 
 ## Example UI Screenshot:

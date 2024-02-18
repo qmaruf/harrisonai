@@ -1,6 +1,7 @@
 import sys
 
 sys.path.append("src")
+import argparse
 import io
 from glob import glob
 from typing import Dict, Tuple
@@ -12,6 +13,7 @@ import torch
 from breeds import CAT_BREEDS, DOG_BREEDS, PET_ID_TO_LABEL
 from config import config
 from data import Transforms
+from loguru import logger
 from torchvision.transforms.functional import to_pil_image
 from torchvision.utils import draw_segmentation_masks
 
@@ -131,7 +133,6 @@ def inference_img(img_path: str) -> Tuple[Dict, str]:
         seg_preds, clf_preds = net(img)
 
     predicted_labels = generate_labels(clf_preds[0].data.cpu().numpy())
-    print(predicted_labels)
     masked_img_byte = postprocess(clf_preds, seg_preds, img, img_path)
     return predicted_labels, masked_img_byte
 
@@ -166,4 +167,16 @@ def inference_imgs():
 
 
 if __name__ == "__main__":
-    inference_imgs()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--img_path", type=str, required=True, help="Path to image")
+    args = parser.parse_args()
+
+    predicted_labels, masked_img_byte = inference_img(args.img_path)
+    print("-----------------Predicted Labels-----------------")
+    for k, v in predicted_labels.items():
+        print(f"{k}: {v}")
+    segment_path = args.img_path.replace(".jpg", "_pred_mask.jpg")
+    with open(segment_path, "wb") as hndl:
+        hndl.write(masked_img_byte)
+
+    logger.info(f"Segmentation mask saved at {segment_path}")
