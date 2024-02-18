@@ -1,55 +1,53 @@
-# petnet
+# PetNet: A Deep Neural Network for Semantic Segmentation and Breed Classification of Cats and Dogs
 
-A deep neural network for the semantic segmentation of cats and dogs images and classifying their breed. We will refer to this network as `petnet`.
 
-This network has the following objectives:
+`PetNet`` is a deep neural network designed for the semantic segmentation of images containing cats and dogs, as well as the classification of their respective breeds. This documentation provides an overview of PetNet, its network architecture, model training and evaluation processes, inference details, and testing instructions.
 
-1. Identify the presence of a cat or a dog or both in the image.
-2. Identify the breed of the animal present in the image.
-3. Provide a binary mask presenting which pixel features a pet (cat or dog) and which does not.
 
-This network is trained on 7270 images of cats and dogs, and it is tested on 1818 images. Each images contain maxium one cat and one dog. 
+## Objectives
+PetNet aims to:
 
-### Network Architecture
-The network is based on the U-Net architecture. It uses a pretrained RESNET-18 network as the backbone. It has two output heads. One head is for multi-label classification (pet type and breed type, 39 labels) and the other head is for semantic segmentation. The network is trained to detect maxium one cat and one dog in the image.
+1. Detect the presence of cats, dogs, or both in an image.
+2. Classify the breed of the detected animal.
+3. Generate a binary mask to distinguish pixels featuring a pet (cat or dog) from those that do not.
 
-### Model Training
-To train the model first download the dataset from [here](https://github.com/harrison-ai/hai-tech-tasks/releases/download/v0.1/cats_and_dogs.zip). Keep the `data` folder and the `pets_dataset_info.csv` file within the `dataset` folder of the project.
+## Dataset
+The network is trained on a dataset comprising 7,270 images of cats and dogs. It is further validated using a separate set of 1,818 images. Each image contains at most one cat and one dog.
 
-Build the docker image using the following command:
+## Network Architecture
+PetNet is based on the U-Net architecture, incorporating a pre-trained RESNET-18 network as its backbone. It features two output heads: one for multi-label classification (covering pet type and breed type, with 39 labels in total) and another for semantic segmentation. The network is designed to detect at most one cat and one dog per image.
+
+## Model Training
+To train the model, follow these steps:
+
+1. Download the dataset from this [link]((https://github.com/harrison-ai/hai-tech-tasks/releases/download/v0.1/cats_and_dogs.zip)). Ensure the data folder and the pets_dataset_info.csv file are placed within the dataset folder of the project.
+2. Build the Docker image using:
 ```bash
 docker build --platform linux/amd64 -t petnet:latest .
 ```
-
-After building the docker image, run the following command to train the model:
+3. To run the docker image and train the model, use the following command:
 ```bash
+docker run -it petnet:latest
 python3 src/train.py
 ```
-
-You can tune the hyperparameters in the `src/config.py` file. The best model will be saved as `weights/model.pth`.
-
+Hyperparameters can be adjusted in the `src/config.py` file. The best-performing model will be saved as `weights/model.pth`.
 
 
+## Model Evaluation
+The training and testing losses, along with accuracy metrics, are logged using Weights and Biases. Metrics such as mean classification precision, recall, segmentation IOU, and loss for both training and validation sets are recorded. The evaluation report is accessible [here](https://api.wandb.ai/links/qmaruf/48qzjuz9).
 
-
-### Model Evaluation
-Train and testing loss and accuracy are logged in Weights and Biases. We log the mean classification precision, recall and segmentation iou for the validation set. We also log the training and validation classification and segmentation loss. The report can be found [here](https://api.wandb.ai/links/qmaruf/48qzjuz9). 
-
-
-
-### Inference
-We have created a REST api to serve the model using FastAPI. To access the api, there is an UI based on Streamlit. To run the api, first build the docker image and then run the `docker-compose.yml` file.
-
+## Inference
+PetNet features a REST API, served using FastAPI, for model inference. An accompanying user interface, built with Streamlit, facilitates interaction with the API. To deploy the API, follow these steps:
+1. Build the Docker image as described in the Model Training section.
+2. Launch the service using:
 ```bash
-docker build --platform linux/amd64 -t petnet:latest .
 docker compose up
 ```
+3. Access the UI at `http://0.0.0.0:9002`. Users can upload images and receive predictions, including pet type, breed, and the segmentation mask.
 
-To access the UI go to `http://0.0.0.0:9002` in your browser. You can upload an image and get the prediction. The prediction will include the pet type (cat, dog or both), the breed of the pet and the segmentation mask.
 
-The UI will look like this:
+## Example UI Screenshot:
+<img src="imgs/inf.png" width="400">
 
-<img src="imgs/inf.png" width="300">
-
-### Test
-Use `pytest` from the root directory to run the tests.
+## Testing
+Run unit tests by executing `pytest` from the root directory of the project.
