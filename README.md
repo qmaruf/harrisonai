@@ -1,7 +1,7 @@
 # PetNet: A Deep Neural Network for Semantic Segmentation and Breed Classification of Cats and Dogs
 
 
-`PetNet`` is a deep neural network designed for the semantic segmentation of images containing cats and dogs, as well as the classification of their respective breeds. This documentation provides an overview of PetNet, its network architecture, model training and evaluation processes, inference details, and testing instructions.
+`PetNet` is a deep neural network designed for the semantic segmentation of images containing cats and dogs, as well as the classification of their respective breeds. This documentation provides an overview of PetNet, its network architecture, model training and evaluation processes, inference details, and testing instructions.
 
 
 ## Objectives
