@@ -51,14 +51,5 @@ The UI will look like this:
 
 <img src="imgs/inf.png" width="300">
 
-
-
-### Bonus
-
-a. Expose a REST API and integrate your predictive model into a backend system. 
-
-b. Cater for images with more than 2 cats and dogs of all combinations of all breeds of pets we have seen in this dataset. 
-
-c. Scale your service to meet ~8,000 requests per second.
-
-testing
+### Test
+Use `pytest` from the root directory to run the tests.
