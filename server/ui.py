@@ -1,8 +1,6 @@
 import sys
 
 sys.path.append("src")
-import os
-import uuid
 from pathlib import Path
 from typing import Dict
 
@@ -17,25 +15,6 @@ storage_path = Path(config.storage_path)
 st.title("Pet Detection")
 
 uploaded_file = st.file_uploader("Choose a jpg file")
-
-
-# def save_image(uploaded_file) -> str:
-#     """
-#     Save image to storage
-#     args:
-#         uploaded_file: file
-#     returns:
-#         image_path: str
-#     """
-#     image_id = f"{str(uuid.uuid4())}.jpg"
-#     image_path = os.path.join(str(storage_path), image_id)
-
-#     logger.info(f"Saving image to {image_path}")
-
-#     with open(image_path, "wb") as hndl:
-#         hndl.write(uploaded_file.getbuffer())
-
-#     return image_path
 
 
 def show_response(predicted_labels: Dict, mask_path: str) -> None:
@@ -65,11 +44,16 @@ def verify(uploaded_file) -> bool:
     return uploaded_file.name.endswith(".jpg")
 
 
+from io import BytesIO
+
 if uploaded_file is not None:
     if verify(uploaded_file):
-        # saved_image_path = save_image(uploaded_file)
-        image_bytes = uploaded_file.getvalue()
-        response = requests.get(url, params={"image_bytes": image_bytes})
+        image_bytes = BytesIO(uploaded_file.getvalue())
+
+        response = requests.post(
+            url, files={"file": ("filename.jpg", image_bytes, "image/jpeg")}
+        )
+        logger.info(f"Received response {response}")
 
         response = response.json()
         mask_path = response["mask_path"]
