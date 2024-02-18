@@ -1,6 +1,7 @@
 import sys
 
 sys.path.append("src")
+import io
 from glob import glob
 from typing import Dict, Tuple
 
@@ -105,8 +106,11 @@ def postprocess(
     masked_img = to_pil_image(masked_img)
     mask_path = img_path.replace(".jpg", "_mask.jpg")
     masked_img.save(mask_path)
-    masked_img_byte = masked_img.getvalue()
-    return masked_img_byte
+
+    img_byte_arr = io.BytesIO()
+    masked_img.save(img_byte_arr, format="JPEG")
+    img_byte_arr = img_byte_arr.getvalue()
+    return img_byte_arr
 
 
 def inference_img(img_path: str) -> Tuple[Dict, str]:

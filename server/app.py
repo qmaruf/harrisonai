@@ -1,3 +1,4 @@
+import base64
 import os
 import shutil
 import uuid
@@ -34,6 +35,9 @@ def inference(file: UploadFile = File(...)) -> Dict:
         shutil.copyfileobj(file.file, buffer)
 
     predicted_labels, masked_img_byte = inference_img(file_path)
+    masked_img_base64 = base64.b64encode(masked_img_byte).decode()
 
-    # logger.info(f"Received and processed file: {file.filename}")
-    return {"predicted_labels": predicted_labels, "masked_img_byte": masked_img_byte}
+    return {
+        "predicted_labels": predicted_labels,
+        "masked_img_base64": masked_img_base64,
+    }

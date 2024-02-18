@@ -1,6 +1,7 @@
 import sys
 
 sys.path.append("src")
+import base64
 from pathlib import Path
 from typing import Dict
 
@@ -56,13 +57,16 @@ if uploaded_file is not None:
         logger.info(f"Received response {response}")
 
         response = response.json()
-        import pdb
 
-        pdb.set_trace()
-        mask_path = response["masked_img_byte"]
+        masked_img_base64 = response["masked_img_base64"]
+        img_data = base64.b64decode(masked_img_base64)
+
+        with open("masked_img.jpg", "wb") as hndl:
+            hndl.write(img_data)
+
         predicted_labels = response["predicted_labels"]
 
-        show_response(predicted_labels, mask_path)
+        show_response(predicted_labels, "masked_img.jpg")
         logger.info(f"Received response {response}")
     else:
         st.error("Please upload a valid jpg file")
