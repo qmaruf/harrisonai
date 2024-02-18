@@ -20,7 +20,7 @@ PetNet is based on the U-Net architecture, incorporating a pre-trained RESNET-18
 ## Model Training
 To train the model, follow these steps:
 
-1. Download the dataset from this [link]((https://github.com/harrison-ai/hai-tech-tasks/releases/download/v0.1/cats_and_dogs.zip)). Ensure the data folder and the pets_dataset_info.csv file are placed within the dataset folder of the project.
+1. Download the dataset from this [link](https://github.com/harrison-ai/hai-tech-tasks/releases/download/v0.1/cats_and_dogs.zip). Ensure the data folder and the pets_dataset_info.csv file are placed within the dataset folder of the project.
 2. Build the Docker image using:
 ```bash
 docker build --platform linux/amd64 -t petnet:latest .
