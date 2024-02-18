@@ -56,7 +56,10 @@ if uploaded_file is not None:
         logger.info(f"Received response {response}")
 
         response = response.json()
-        mask_path = response["mask_path"]
+        import pdb
+
+        pdb.set_trace()
+        mask_path = response["masked_img_byte"]
         predicted_labels = response["predicted_labels"]
 
         show_response(predicted_labels, mask_path)

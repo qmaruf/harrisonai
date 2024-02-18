@@ -105,7 +105,8 @@ def postprocess(
     masked_img = to_pil_image(masked_img)
     mask_path = img_path.replace(".jpg", "_mask.jpg")
     masked_img.save(mask_path)
-    return mask_path
+    masked_img_byte = masked_img.getvalue()
+    return masked_img_byte
 
 
 def inference_img(img_path: str) -> Tuple[Dict, str]:
@@ -127,8 +128,8 @@ def inference_img(img_path: str) -> Tuple[Dict, str]:
 
     predicted_labels = generate_labels(clf_preds[0].data.cpu().numpy())
     print(predicted_labels)
-    mask_path = postprocess(clf_preds, seg_preds, img, img_path)
-    return predicted_labels, mask_path
+    masked_img_byte = postprocess(clf_preds, seg_preds, img, img_path)
+    return predicted_labels, masked_img_byte
 
 
 def inference_imgs():

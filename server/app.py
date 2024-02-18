@@ -33,7 +33,7 @@ def inference(file: UploadFile = File(...)) -> Dict:
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    predicted_labels, mask_path = inference_img(file_path)
+    predicted_labels, masked_img_byte = inference_img(file_path)
 
-    logger.info(f"Received and processed file: {file.filename}")
-    return {"predicted_labels": predicted_labels, "mask_path": mask_path}
+    # logger.info(f"Received and processed file: {file.filename}")
+    return {"predicted_labels": predicted_labels, "masked_img_byte": masked_img_byte}
