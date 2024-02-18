@@ -22,7 +22,7 @@ def ping() -> str:
 
 
 @app.post("/inference")
-def inference(file: UploadFile = File(...)) -> Dict:
+async def inference(file: UploadFile = File(...)) -> Dict:
     """
     Inference on single image received as a file upload.
     """
