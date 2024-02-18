@@ -40,7 +40,11 @@ def get_metric(dl: torch.utils.data.DataLoader):
 
     for data in tqdm(dl, total=len(dl.dataset) // config.batch_size, desc="metric"):
         imgs, clf_lbls, seg_lbls = data
-        imgs, clf_lbls, seg_lbls = imgs.cuda(), clf_lbls.cuda(), seg_lbls.cuda()
+        imgs, clf_lbls, seg_lbls = (
+            imgs.to(config.device),
+            clf_lbls.to(config.device),
+            seg_lbls.to(config.device),
+        )
         with torch.no_grad():
             seg_preds, clf_preds = net(imgs)
 
@@ -79,7 +83,11 @@ def one_epoch(dl: torch.utils.data.DataLoader, train: bool) -> float:
     for data in dl:
         pbar.update(1)
         imgs, lbls, segs = data
-        imgs, lbls, segs = imgs.cuda(), lbls.cuda(), segs.cuda()
+        imgs, lbls, segs = (
+            imgs.to(config.device),
+            lbls.to(config.device),
+            segs.to(config.device),
+        )
 
         if train:
             seg_preds, clf_preds = net(imgs)

@@ -15,7 +15,9 @@ class config:
     n_classes = 39
     weight_path = "weights/model.pth"
     storage_path = "server/uploaded_files"
-    api_endpoint = "http://127.0.0.1:8000/inference"
+
+    # api_endpoint = "http://0.0.0.0:8000/inference"
+    api_endpoint = "http://uvicorn_server:9001/inference"
 
 
 Path("weights").mkdir(exist_ok=True)
