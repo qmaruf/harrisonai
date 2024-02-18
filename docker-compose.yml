@@ -4,13 +4,10 @@ services:
     image: petnet:latest
     container_name: uvicorn_server
     platform: linux/amd64
-
     command: uvicorn server.app:app --host 0.0.0.0 --port 9001
     ports:
       - "9001:9001"
-    volumes:
-      - /Volumes/drive2/code/harrisonai:/app    
-
+  
   streamlit_ui:
     image: petnet:latest
     container_name: streamlit_ui
@@ -18,9 +15,6 @@ services:
     command: streamlit run server/ui.py --server.address 0.0.0.0 --server.port 9002 --server.fileWatcherType None --browser.gatherUsageStats False
     ports:
       - "9002:9002"
-    depends_on:
-      - uvicorn_server
-    volumes:
-      - /Volumes/drive2/code/harrisonai:/app
+    
 
   
