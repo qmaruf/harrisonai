@@ -84,7 +84,7 @@ def postprocess(
         img: np.ndarray
         img_path: str
     returns:
-        mask_path: str
+        img_byte_arr: str
     """
     clf_preds = clf_preds[0].data.cpu().numpy()
     seg_preds = seg_preds[0].data.cpu().numpy()
@@ -120,7 +120,7 @@ def inference_img(img_path: str) -> Tuple[Dict, str]:
         img_path: str
     returns:
         predicted_labels: Dict
-        mask_path: str
+        masked_img_byte: str
     """
     img = cv2.imread(img_path)
     h, w = img.shape[:2]

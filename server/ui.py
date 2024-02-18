@@ -2,6 +2,7 @@ import sys
 
 sys.path.append("src")
 import base64
+from io import BytesIO
 from pathlib import Path
 from typing import Dict
 
@@ -44,8 +45,6 @@ def verify(uploaded_file) -> bool:
     """
     return uploaded_file.name.endswith(".jpg")
 
-
-from io import BytesIO
 
 if uploaded_file is not None:
     if verify(uploaded_file):
