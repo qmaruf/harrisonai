@@ -1,15 +1,27 @@
-import torch.nn as nn
-import torch
-from data import DataProcessor
 import numpy as np
+import torch
+import torch.nn as nn
 from config import config
 
 
 class DiceLoss(nn.Module):
+    """
+    Dice Loss
+    """
+
     def __init__(self):
         super(DiceLoss, self).__init__()
 
-    def forward(self, inputs, targets, smooth=1):
+    def forward(self, inputs: torch.tensor, targets: torch.tensor, smooth: float = 1):
+        """
+        Forward pass
+        args:
+            inputs: torch.tensor
+            targets: torch.tensor
+            smooth: int
+        returns:
+            loss: torch.tensor
+        """
         targets = torch.where(targets > 0.5, 1.0, 0.0)
 
         inputs = inputs.view(-1)
@@ -26,9 +38,16 @@ class Metrics:
         pass
 
     def get_precision_recall(self, dl_labels, dl_outputs):
-        pet_id_to_labels = DataProcessor().pet_id_to_label
+        """
+        Get mean precision and recall for multi-label classification
+        args:
+            dl_labels: np.ndarray [all classifier labels]
+            dl_outputs: np.ndarray [all classifier predictions]
+        returns:
+            precision: float
+            recall: float
+        """
         dl_outputs = np.where(dl_outputs > 0.5, 1, 0)
-        metrics_dict = {}
         precisions, recalls = [], []
         for i in range(config.n_classes):
             tp = np.sum((dl_labels[:, i] == 1) & (dl_outputs[:, i] == 1))
@@ -38,16 +57,22 @@ class Metrics:
             recall = tp / (tp + fn) if (tp + fn > 0) else 0
             precisions.append(precision)
             recalls.append(recall)
-            # metrics_dict[pet_id_to_labels[i]] = {
-            #     "precision": precision,
-            #     "recall": recall,
-            # }
+
         precision = np.mean(precisions)
         recall = np.mean(recalls)
         return precision, recall
 
-    def get_iou_score(self, seg_lbls_dl, seg_prds_dl, smooth=1):
-        # import pdb; pdb.set_trace()
+    def get_iou_score(self, seg_lbls_dl: np.ndarray, seg_prds_dl: np.ndarray, smooth=1):
+        """
+        Get mean IoU score
+        args:
+            seg_lbls_dl: np.ndarray
+            seg_prds_dl: np.ndarray
+            smooth: int
+        returns:
+            iou: float
+        """
+
         seg_prds_dl = np.where(seg_prds_dl > 0.5, 1, 0)
         seg_lbls_dl = np.where(seg_lbls_dl > 0.5, 1, 0)
 

@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import torch
 
 
@@ -11,3 +13,10 @@ class config:
     debug = False
     max_side = 256
     n_classes = 39
+    weight_path = "weights/model.pth"
+    storage_path = "server/uploaded_files"
+    api_endpoint = "http://127.0.0.1:8000/inference"
+
+
+Path("weights").mkdir(exist_ok=True)
+Path("server/uploaded_files").mkdir(exist_ok=True)

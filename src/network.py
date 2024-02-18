@@ -1,10 +1,13 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-from torchvision.models import resnet18, ResNet18_Weights
+from torchvision.models import ResNet18_Weights, resnet18
 
 
 class ConvRelu(nn.Module):
+    """
+    Convolutional layer followed by ReLU
+    """
+
     def __init__(self, in_channels, out_channels, kernel, padding):
         super(ConvRelu, self).__init__()
         self.conv = nn.Sequential(
@@ -17,6 +20,10 @@ class ConvRelu(nn.Module):
 
 
 class ChannelReduce(nn.Module):
+    """
+    Reduce channel size to 1
+    """
+
     def __init__(self, in_channels=128, out_channels=1):
         super(ChannelReduce, self).__init__()
         self.conv = nn.Sequential(
@@ -37,15 +44,12 @@ class PetNet(nn.Module):
         in_channels=3,
         out_channels=1,
     ):
+        """
+        UNet model for pet segmentation with resnet18 backbone
+        """
         super(PetNet, self).__init__()
         self.base_model = resnet18(weights=ResNet18_Weights.DEFAULT)
         self.base_layers = list(self.base_model.children())
-
-        self.layer0 = nn.Sequential(*self.base_layers[:3])
-        self.layer1 = nn.Sequential(*self.base_layers[3:5])
-        self.layer2 = nn.Sequential(*self.base_layers[5])
-        self.layer3 = nn.Sequential(*self.base_layers[6])
-        self.layer4 = nn.Sequential(*self.base_layers[7])
 
         self.downs = [
             nn.Sequential(*self.base_layers[:3]),
@@ -68,10 +72,6 @@ class PetNet(nn.Module):
 
         self.conv_last = nn.Conv2d(64, 1, 1)
 
-        self.r1 = nn.Conv2d(128, 64, 1)
-        self.r2 = nn.Conv2d(64, 32, 1)
-        self.r3 = nn.Conv2d(32, 1, 1)
-
         self.sigmoid = nn.Sigmoid()
         self.relu = nn.ReLU()
 
@@ -81,9 +81,9 @@ class PetNet(nn.Module):
 
         self.clf_block = nn.Sequential(
             nn.Conv2d(512, 512, 2, 2),
-            nn.ReLU(),
+            nn.ReLU(inplace=True),
             nn.Conv2d(512, 512, 2, 2),
-            nn.ReLU(),
+            nn.ReLU(inplace=True),
             nn.Conv2d(512, 512, 2, 2),
         )
 
@@ -99,7 +99,6 @@ class PetNet(nn.Module):
         clf = self.fc(clf)
         clf = self.sigmoid(clf)
 
-        # pdb.set_trace()
         skip_conns = skip_conns[:-1][::-1]
         for i, skip_conn in enumerate(skip_conns):
             x = self.upsample(x)
@@ -107,8 +106,7 @@ class PetNet(nn.Module):
             x = self.ups[i](x)
 
         x = self.upsample(x)
-
         x = self.channel_reduce(x)
-
         seg = self.sigmoid(x)
+
         return seg, clf
