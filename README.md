@@ -51,3 +51,6 @@ docker compose up
 
 ## Testing
 Run unit tests by executing `pytest` from the root directory of the project.
+
+## EDA
+The EDA notebook is available [here](https://github.com/qmaruf/harrisonai/blob/main/notebook/harrison_pets.ipynb).
